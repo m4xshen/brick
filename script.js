@@ -44,8 +44,8 @@ class Stick extends Item {
   }
 
   update() {
-    if(this.goRight && this.x+this.width<winW) this.x++;
-    if(this.goLeft && this.x>0) this.x--;
+    if(this.goRight && this.x+this.width<winW) this.x += winW/1500;
+    if(this.goLeft && this.x>0) this.x -= winW/1500;
   }
 }
 
@@ -67,11 +67,13 @@ class Ball extends Item {
     this.x += dx;
     this.y += dy;
 
-    // hit bottom
+    // game over
     if(this.y >= winH-this.height) {
       clearInterval(loop);
-      gameOver.innerHTML += score;
-      gameOver.style.visibility = 'visible';
+      title.innerHTML = 'game over!';
+      content.innerHTML = 'score: ' + score; 
+      menu.style.visibility = 'visible';
+      scoreDisplay.style.visibility = 'hidden';
     }
 
     // hit broader
@@ -129,9 +131,10 @@ for(let r = 0; r < row; r++) {
 
 const stick = new Stick();
 const ball = new Ball();
+const menu = document.getElementById('menu');
+const title = document.getElementById('title');
+const content = document.getElementById('content');
 const scoreDisplay = document.getElementById('scoreDisplay');
-const startMenu = document.getElementById('startMenu');
-const gameOver = document.getElementById('gameOver');
 let gameStart = false;
 
 // start moving stick
@@ -143,9 +146,9 @@ document.addEventListener('keydown', (event) => {
   else if(event.key == 'l') {
     stick.goRight = true;
   }
-  else if(event.key == 'Enter') {
+  else if(event.key=='Enter' && !gameStart) {
     gameStart = true;
-    startMenu.style.visibility = 'hidden';
+    menu.style.visibility = 'hidden';
   }
 });
 
@@ -159,6 +162,7 @@ document.addEventListener('keyup', (event) => {
   }
 });
 
+// game loop
 const loop = setInterval(run, 1);
 
 function run() {
