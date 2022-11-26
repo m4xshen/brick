@@ -1,7 +1,3 @@
-const winW = window.innerWidth, winH = window.innerHeight;
-const col = 9, row = 3, gapCol = winW*0.01, gapRow = winH * 0.02
-let dx = winW*0.001, dy = winH*-0.001;
-
 class Item {
   constructor() {
     this.element = document.createElement("div");
@@ -24,6 +20,15 @@ class Brick extends Item {
     this.width = (winW-(col+1)*gapCol) / col;
     this.x = c*this.width + (c+1)*gapCol;
     this.y = r*this.height + (r+1)*gapRow;
+    this.shield = Math.floor(Math.random()*4 + 1);
+  }
+
+  update() {
+    if(this.shield <= 0) {
+      this.width = 0;
+      this.height = 0;
+    }
+    this.element.style['background-color'] = colors[this.shield];
   }
 }
 
@@ -34,8 +39,13 @@ class Stick extends Item {
     this.width = winW * 0.1;
     this.x = (winW-this.width) / 2;
     this.y = winH * 0.9
+    this.goRight = false;
+    this.goLeft = false;
+  }
 
-    this.draw();
+  update() {
+    if(this.goRight && this.x+this.width<winW) this.x++;
+    if(this.goLeft && this.x>0) this.x--;
   }
 }
 
@@ -46,45 +56,128 @@ class Ball extends Item {
     this.width = winW * 0.015;
     this.x = (winW-this.width) / 2;
     this.y = winH * 0.85
-    this.radius = 100;
   }
 
   draw() {
     super.draw();
-    this.element.style['border-radius'] = this.radius + '%';
-  }
-
-  move() {
-    this.x += dx;
-    this.y += dy;
+    this.element.style['border-radius'] = '100%';
   }
 
   update() {
-    if(this.x<=0 || this.x>=winW-this.width) dx *= -1;
-    if(this.y<=0) dy *= -1;
+    this.x += dx;
+    this.y += dy;
+
+    // hit bottom
     if(this.y >= winH-this.height) {
       clearInterval(loop);
-      alert("Game Over");
+      gameOver.innerHTML += score;
+      gameOver.style.visibility = 'visible';
+    }
+
+    // hit broader
+    if(this.x<=0 || this.x>=winW-this.width) dx *= -1;
+    if(this.y<=0) dy *= -1;
+
+    // hit stick
+    if(this.x>=stick.x && this.x<=stick.x+stick.width && this.y+this.height>=stick.y) dy *= -1;
+
+    // hit bricks
+    for(let r = 0; r < row; r++) {
+      for(let c = 0; c < col; c++) {
+        if(brick[r][c].shield <= 0) continue;
+
+        // bottom
+        if(this.x>=brick[r][c].x &&
+          this.x<=brick[r][c].x+brick[r][c].width &&
+          this.y>=brick[r][c].y &&
+          this.y<=brick[r][c].y+brick[r][c].height) {
+          dy *= -1;
+          score += 5-brick[r][c].shield;
+          brick[r][c].shield--;
+        } // right
+        else if(this.x>=brick[r][c].c && this.x <= brick[r][c].x+brick[r][c].width &&
+          this.y>=brick[r][c].y && this.y<=brick[r][c].y+brick[r][c].height) {
+          dx *= -1;
+          score += 5-brick[r][c].shield;
+          brick[r][c].shield--;
+        } // left
+        else if(this.x+this.width>=brick[r][c].x && this.x+this.width<=brick[r][c].x+brick[r][c].width &&
+          this.y>=brick[r][c].y && this.y<=brick[r][c].y+brick[r][c].height) {
+          dx *= -1;
+          score += 5-brick[r][c].shield;
+          brick[r][c].shield--;
+        }
+      }
     }
   }
 }
 
+const winW = window.innerWidth, winH = window.innerHeight;
+const col = 9, row = 3, gapCol = winW*0.004, gapRow = winH * 0.01
+const colors = ['', '#F38BA8', '#F9E2AF', '#89B4FA', '#A6E3A1'];
+let dx = winW*0.001, dy = winH*-0.001;
+let score = 0;
+
+// create bricks
 const brick = [];
 for(let r = 0; r < row; r++) {
   brick[r] = [];
   for(let c = 0; c < col; c++) {
     brick[r][c] = new Brick(r, c);
-    brick[r][c].draw();
   }
 }
 
 const stick = new Stick();
 const ball = new Ball();
+const scoreDisplay = document.getElementById('scoreDisplay');
+const startMenu = document.getElementById('startMenu');
+const gameOver = document.getElementById('gameOver');
+let gameStart = false;
+
+// start moving stick
+document.addEventListener('keydown', (event) => {
+  console.log(event.key);
+  if(event.key == 'h') {
+    stick.goLeft = true;
+  }
+  else if(event.key == 'l') {
+    stick.goRight = true;
+  }
+  else if(event.key == 'Enter') {
+    gameStart = true;
+    startMenu.style.visibility = 'hidden';
+  }
+});
+
+// stop moving stick
+document.addEventListener('keyup', (event) => {
+  if(event.key == 'h') {
+    stick.goLeft = false;
+  }
+  else if(event.key == 'l') {
+    stick.goRight = false;
+  }
+});
 
 const loop = setInterval(run, 1);
 
 function run() {
-  ball.move();
+  if(gameStart) {
+    ball.update();
+    stick.update();
+
+    // update score
+    scoreDisplay.innerHTML = 'score: ' + score;
+  }
+
   ball.draw();
-  ball.update();
+  stick.draw();
+
+  // update brick
+  for(let r = 0; r < row; r++) {
+    for(let c = 0; c < col; c++) {
+      brick[r][c].update();
+      brick[r][c].draw();
+    }
+  }
 }
