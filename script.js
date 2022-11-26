@@ -117,7 +117,8 @@ class Ball extends Item {
 const winW = window.innerWidth, winH = window.innerHeight;
 const col = 9, row = 3, gapCol = winW*0.004, gapRow = winH * 0.01
 const colors = ['', '#F38BA8', '#F9E2AF', '#89B4FA', '#A6E3A1'];
-let dx = winW*0.001, dy = winH*-0.001;
+let dx = winW*0.001*Math.sign(Math.random()-0.5);
+let dy = winH*0.001*Math.sign(Math.random()-0.5);
 let score = 0;
 
 // create bricks
