@@ -44,8 +44,8 @@ class Stick extends Item {
   }
 
   update() {
-    if(this.goRight && this.x+this.width<winW) this.x += winW/1500;
-    if(this.goLeft && this.x>0) this.x -= winW/1500;
+    if(this.goRight && this.x+this.width<winW) this.x += winW/1000;
+    if(this.goLeft && this.x>0) this.x -= winW/1000;
   }
 }
 
